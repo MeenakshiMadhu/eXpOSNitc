@@ -1,0 +1,15 @@
+//alias i R0;
+alias sum R1;
+alias n R0;
+
+//i = 1;
+sum = 0;
+n = 20;
+
+//while(i <= 20) do
+//	sum = sum + (i*i);
+//	i = i+1;
+//endwhile;
+
+sum = (n*(n+1)*(2*n+1))/6;
+print sum;

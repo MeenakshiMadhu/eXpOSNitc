@@ -1,0 +1,18 @@
+//Storing SP value in UPTR
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13] = SP;
+
+//Setting SP value to beginning of Kernel Stack = UArea Page number * 512 - 1
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +11] * 512 - 1;
+
+//Save user context to kernel Stack
+backup;
+
+print "TIMER";
+print [SYSTEM_STATUS_TABLE+1];
+
+//Restore user contextfrom kernel stack, set SP back to user process SP
+restore;
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13];
+
+//switch back to User mode
+ireturn;
