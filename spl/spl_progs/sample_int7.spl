@@ -1,0 +1,54 @@
+//set MODE flag field in process table to 5 for write system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+
+//storing user SP in a register
+alias userSP R0;
+userSP = SP;
+
+//Storing SP value in UPTR
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13] = SP;
+
+//Setting SP value to beginning of Kernel Stack = UArea Page number * 512 - 1
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +11] * 512 - 1;
+
+//Save user context to kernel Stack
+backup;
+
+// Accessing arg 1
+alias physicalPageNum R1;
+alias offset R2;
+alias fileDescPhysicalAddr R3;
+
+physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+offset = (userSP - 4) % 512;
+fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
+alias fileDescriptor R4;
+fileDescriptor=[fileDescPhysicalAddr];
+
+if (fileDescriptor != -2)
+then
+	// Storing -1 as a return value
+    alias physicalAddrRetVal R5;
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = -1;
+else
+    // Accessing arg 2
+    alias word R5;
+    word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+    print word;
+
+    // Storing 0 as return value
+    alias physicalAddrRetVal R6;
+    physicalAddrRetVal = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
+    [physicalAddrRetVal] = 0;
+endif;
+
+//Restore user contextfrom kernel stack, set SP back to user process SP
+restore;
+SP = userSP;
+
+// Reset MODE flag to 0
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+//switch back to User mode
+ireturn;
