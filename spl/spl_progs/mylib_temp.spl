@@ -1,0 +1,36 @@
+//storing user SP in a register
+alias userSP R0;
+userSP = SP;
+
+// Accessing Function Code
+alias funcCode R4;
+funcCode=[[PTBR + 2 * ((userSP - 4)/ 512)] * 512) + ((userSP - 4) % 512)];
+
+if (funcCode != "Write")
+then
+    // Storing -3 as a return value
+    alias physicalAddrRetVal R5;
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP) / 512)] * 512) + ((userSP) % 512);
+	[physicalAddrRetVal] = -3;
+else
+    // Accessing Arg 1 - File Descriptor
+    alias  fileDescriptor R5;
+    fileDescriptor= [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+    if (fileDescriptor != -2)
+    then
+        // Storing -1 as a return value
+        alias physicalAddrRetVal R5;
+	    physicalAddrRetVal = ([PTBR + 2 * ((userSP) / 512)] * 512) + ((userSP) % 512);
+	    [physicalAddrRetVal] = -1;
+    else
+        // Accessing arg 2
+        alias word R5;
+        word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+        INT 7
+    
+        // Storing 0 as return value
+        alias physicalAddrRetVal R6;
+        physicalAddrRetVal = ([PTBR + 2 * (userSP)/ 512] * 512) + ((userSP) % 512);
+        [physicalAddrRetVal] = 0;
+endif;

@@ -1,3 +1,5 @@
+breakpoint;
+
 //Storing SP value in UPTR
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13] = SP;
 
@@ -7,12 +9,56 @@ SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +11] * 512 - 1;
 //Save user context to kernel Stack
 backup;
 
-print "TIMER";
-print [SYSTEM_STATUS_TABLE+1];
+// print "TIMER";
+// print [SYSTEM_STATUS_TABLE+1];
+
+// Fetching PID of current process
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+// Updating process table entry for current process
+alias PROCESS_TABLE_ENTRY R1;
+PROCESS_TABLE_ENTRY = PROCESS_TABLE + currentPID * 16;
+[PROCESS_TABLE_ENTRY + 12] = SP % 512;
+[PROCESS_TABLE_ENTRY + 14] = PTBR;
+[PROCESS_TABLE_ENTRY + 15] = PTLR;
+[PROCESS_TABLE_ENTRY + 4] = READY;  
+
+// Set PID of new process
+alias newPID R2;
+if(currentPID == 0) then
+	newPID = 1;
+else
+	newPID = 0;
+endif;
+
+// Restoring values from process table entry for new process
+alias NEW_PROCESS_TABLE R3;
+NEW_PROCESS_TABLE = PROCESS_TABLE + newPID * 16;
+
+SP =  [NEW_PROCESS_TABLE + 11] * 512 + [NEW_PROCESS_TABLE + 12] ;
+PTBR = [NEW_PROCESS_TABLE + 14];
+PTLR = [NEW_PROCESS_TABLE + 15];
+
+// Update PID in System Status Table
+[SYSTEM_STATUS_TABLE + 1] = newPID;
+
+// if state is CREATED, no user context to be restored
+if([NEW_PROCESS_TABLE + 4] == CREATED) then
+    [NEW_PROCESS_TABLE + 4] = RUNNING;
+    SP = [NEW_PROCESS_TABLE + 13];
+    ireturn;
+endif;
+
+
+[NEW_PROCESS_TABLE + 4] = RUNNING;
+
 
 //Restore user contextfrom kernel stack, set SP back to user process SP
 restore;
 SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13];
+
+breakpoint;
 
 //switch back to User mode
 ireturn;
