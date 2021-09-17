@@ -5,7 +5,7 @@ decl
 enddecl
 begin
     num = 101;
-    while (num <= 200) do
+    while (num <= 300) do
         temp = exposcall ( "Write" , -2, num );
         num = num + 1;
     endwhile;

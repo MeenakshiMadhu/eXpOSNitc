@@ -3,8 +3,10 @@ load --int=7 $HOME/myexpos/spl/spl_progs/sample_int7.xsm
 load --int=10 $HOME/myexpos/spl/spl_progs/haltprog.xsm
 load --int=timer $HOME/myexpos/spl/spl_progs/sample_timer.xsm
 load --module 7 $HOME/myexpos/spl/spl_progs/boot_module.xsm
+load --module 5 $HOME/myexpos/spl/spl_progs/context_switch.xsm
 load --library $HOME/myexpos/expl/library.lib
 load --idle $HOME/myexpos/expl/expl_progs/idle.xsm
-load --init $HOME/myexpos/expl/expl_progs/print1to100.xsm
+load --init $HOME/myexpos/expl/expl_progs/odd100.xsm
 load --exec $HOME/myexpos/expl/expl_progs/even100.xsm
+load --exec $HOME/myexpos/expl/expl_progs/prime100.xsm
 load --os $HOME/myexpos/spl/spl_progs/os_startup.xsm

@@ -16,47 +16,28 @@ backup;
 alias currentPID R0;
 currentPID = [SYSTEM_STATUS_TABLE+1];
 
-// Updating process table entry for current process
-alias PROCESS_TABLE_ENTRY R1;
-PROCESS_TABLE_ENTRY = PROCESS_TABLE + currentPID * 16;
-[PROCESS_TABLE_ENTRY + 12] = SP % 512;
-[PROCESS_TABLE_ENTRY + 14] = PTBR;
-[PROCESS_TABLE_ENTRY + 15] = PTLR;
-[PROCESS_TABLE_ENTRY + 4] = READY;  
-
-// Set PID of new process
-alias newPID R2;
-if(currentPID == 0) then
-	newPID = 1;
-else
-	newPID = 0;
-endif;
-
-// Restoring values from process table entry for new process
-alias NEW_PROCESS_TABLE R3;
-NEW_PROCESS_TABLE = PROCESS_TABLE + newPID * 16;
-
-SP =  [NEW_PROCESS_TABLE + 11] * 512 + [NEW_PROCESS_TABLE + 12] ;
-PTBR = [NEW_PROCESS_TABLE + 14];
-PTLR = [NEW_PROCESS_TABLE + 15];
-
-// Update PID in System Status Table
-[SYSTEM_STATUS_TABLE + 1] = newPID;
-
-// if state is CREATED, no user context to be restored
-if([NEW_PROCESS_TABLE + 4] == CREATED) then
-    [NEW_PROCESS_TABLE + 4] = RUNNING;
-    SP = [NEW_PROCESS_TABLE + 13];
-    ireturn;
-endif;
+// Updating STATE in process table entry for current process
+[PROCESS_TABLE + currentPID * 16 + 4] = READY;
 
 
-[NEW_PROCESS_TABLE + 4] = RUNNING;
+// Increment TICK value of all processes
+alias ctr R1;
+ctr = 0;
+while(ctr < 16) do
+    [PROCESS_TABLE + ctr*16] = [PROCESS_TABLE + ctr*16] + 1;
+    ctr = ctr + 1;
+endwhile;
+
+
+call CONTEXT_SWITCH;
 
 
 //Restore user contextfrom kernel stack, set SP back to user process SP
 restore;
 SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +13];
+
+// Setting MODE flag to 0
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE+1] * 16) +9] = 0;
 
 breakpoint;
 
