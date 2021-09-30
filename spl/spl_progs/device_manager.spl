@@ -1,0 +1,27 @@
+//MODULE 4
+
+alias functionNum R1;
+alias currentPID R2;
+
+if( functionNum == 3 ) then
+    
+    // calling Acquire Terminal
+    multipush(R0, R1, R2, R3);
+    functionNum = 8;
+    currentPID = [SYSTEM_STATUS_TABLE+1];
+    call RESOURCE_MANAGER;
+    multipop(R0, R1, R2, R3);
+
+    alias word R3;
+    print word;
+
+    // calling Release Terminal 
+    multipush(R0, R1, R2, R3);
+    functionNum = 9;
+    currentPID = [SYSTEM_STATUS_TABLE+1];
+    call RESOURCE_MANAGER;
+    //can store return value from R0 to another reg
+    multipop(R0, R1, R2, R3);
+endif ;
+
+return;

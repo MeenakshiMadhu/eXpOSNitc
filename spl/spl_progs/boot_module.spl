@@ -10,6 +10,12 @@ loadi(17,30);
 //int10 module
 loadi(22,35);
 loadi(23,36);
+//module0 (resource manager)
+loadi(40,53);
+loadi(41,54);
+//module4 (device manager)
+loadi(48,61);
+loadi(49,62);
 //module5 (scheduler)
 loadi(50,63);
 loadi(51,64);
@@ -24,6 +30,8 @@ loadi(83,69);
 //prime100
 loadi(90,70);
 
+//Terminal is free
+[TERMINAL_STATUS_TABLE] = 0;
 
 //INIT PROCESS
 
@@ -161,7 +169,6 @@ while(ctr<16) do
     [PROCESS_TABLE+ ctr*16 + 4] = TERMINATED;
     ctr = ctr + 1;
 endwhile;
-
 
 //Return to OS startup code
 return;
