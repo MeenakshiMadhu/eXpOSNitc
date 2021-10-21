@@ -1,0 +1,46 @@
+decl
+    int a[10];
+enddecl
+int main()
+{
+    decl
+        int temp, n, i, j, t;
+        string input, output;
+    enddecl
+    begin
+        input = "Enter size: ";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, n);
+        
+        input = "Enter no.s: ";
+        temp = exposcall("Write", -2, input);
+        i = 0;
+        while (i < n) do
+            temp = exposcall("Read", -1, a[i]);
+            i = i+1;
+        endwhile;
+        
+        i = 0;
+        while (i < n) do
+            j = 0;
+            while (j < (n-i-1)) do
+                if (a[j] > a[j+1]) then
+                    t = a[j];
+                    a[j] = a[j+1];
+                    a[j+1] = t;
+                endif;
+                j = j+1;
+            endwhile;
+            i = i+1;
+        endwhile;
+
+        output = "Sorted Array: ";
+        temp = exposcall("Write", -2, output);
+        i = 0;
+        while (i < n) do
+            temp = exposcall("Write", -2, a[i]);
+            i = i+1;
+        endwhile;
+        return 0;
+    end
+}

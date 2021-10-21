@@ -1,0 +1,21 @@
+int main()
+{
+    decl
+        int temp, num1, num2, sum;
+        string input, output;
+    enddecl
+    begin
+        input = "Enter 1st num: ";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, num1);
+        input = "Enter 2nd num: ";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, num2);
+        sum = num1 + num2;
+
+        output = "Sum: ";
+        temp = exposcall("Write", -2, output);
+        temp = exposcall("Write", -2, sum);
+        return 0;
+    end
+}

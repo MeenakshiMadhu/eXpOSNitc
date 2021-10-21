@@ -1,0 +1,32 @@
+// Console Interrupt Handler
+
+// Store SP value in UPTR field of Process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] = SP;
+
+// Switch to kernel stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +11] * 512 - 1;
+
+backup;
+
+alias reqPID R2;
+reqPID = [TERMINAL_STATUS_TABLE + 1];
+
+// Copying input in P0 to input buffer field of Process table entry for corresponding process
+[PROCESS_TABLE + reqPID*16 + 8] = P0;
+
+// Releasing the Terminal
+multipush(R0, R1, R2);
+alias functionNum R1;
+functionNum = 9;
+// R2 contains reqPID
+call RESOURCE_MANAGER;
+multipop(R0, R1, R2);
+
+restore;
+
+// Switch to user stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+
+// return to user mode
+ireturn;

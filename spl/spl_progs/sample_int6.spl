@@ -1,0 +1,58 @@
+// READ - Interrupt 6
+
+//set MODE flag field in process table to 7 for read system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 7;
+
+//storing user SP in a register
+alias userSP R0;
+userSP = SP;
+
+//Storing SP value in UPTR
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = userSP;
+
+//Setting SP value to beginning of Kernel Stack = UArea Page number * 512 - 1
+//Switching to Kernel
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +11]*512 - 1;
+
+// Accessing arg 1 - File Descriptor
+alias physicalPageNum R1;
+alias offset R2;
+alias fileDescPhysicalAddr R3;
+
+physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+offset = (userSP - 4) % 512;
+fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
+alias fileDescriptor R4;
+fileDescriptor=[fileDescPhysicalAddr];
+
+if(fileDescriptor != -1) then
+	// Storing -1 as a return value
+    alias physicalAddrRetVal R5;
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = -1;
+else
+    // Accessing arg 2 - Word address
+    alias address R3;
+    address = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+    multipush(R0, R1, R2, R3, R4, R5);
+    //Terminal Read function
+    alias functionNum R1;
+    alias currentPID R2;
+    functionNum = 4;
+    currentPID = [SYSTEM_STATUS_TABLE+1];
+    // print address;
+    call DEVICE_MANAGER;
+    multipop(R0, R1, R2, R3, R4, R5);
+
+    // Storing 0 as return value
+    alias physicalAddrRetVal R6;
+    physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1)/ 512)] * 512) + ((userSP - 1) % 512);
+    [physicalAddrRetVal] = 0;
+endif;
+
+// Reset MODE flag to 0
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+SP = userSP;
+
+ireturn;

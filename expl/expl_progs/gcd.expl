@@ -1,0 +1,28 @@
+int main()
+{
+    decl
+        int temp, a, b;
+        string input, output;
+    enddecl
+    begin
+        input = "Enter 1st num: ";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, a);
+        input = "Enter 2nd num: ";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, b);
+        
+        while(a != b) do
+            if (a > b) then
+                a = a-b;
+            else
+                b = b-a;
+            endif;
+        endwhile;
+
+        output = "GCD: ";
+        temp = exposcall("Write", -2, output);
+        temp = exposcall("Write", -2, b);
+        return 0;
+    end
+}
