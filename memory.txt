@@ -29,12 +29,12 @@ PAGE            CONTENTS
 50-51           Module 5 (Context Switch Module / Scheduler Module)
 52-53           Module 6 (Pager Module)
 54-55           Module 7 (Boot Module)
-56
-57
-58
-59-69
-61
-62
+56              Process Table, Open File table, Semaphore Table (256+128+128)
+57              Mem free list, File status table, Disk status table, System status table, terminal status table, Access lock table, Unallocated (128+240+8+8+8+8+112)
+58              Page tables, Buffer table, Disk map table, Unallocated (320+16+160+16)
+59-60           Mem copy of Inode table, Mem copy of User table, Unallocated (960+32+32)
+61              Mem copy of Disk free list (512)
+62              Mem copy of Root file, Unallocated (480+32)
 63-64           Expos library
 65-66           INIT / Login Program
 67-68           Shell Program
@@ -51,12 +51,12 @@ PAGE            CONTENTS
 81              Stack for Idle
 82              User Area Page No. for Idle
 
-83-(84)         Code for Even100
-85-86           Stack for Even100
-87-88           Heap for Even100
-89              User Area Page No. for Even100
+83-(84)         //Code for Even100
+85-86           //Stack for Even100
+87-88           //Heap for Even100
+89              //User Area Page No. for Even100
 
-90-(91)         Code for Prime100
-92-93           Stack for Prime100
-94-95           Heap for Prime100
-96              User Area Page No. for Prime100
+90-(91)         //Code for Prime100
+92-93           //Stack for Prime100
+94-95           //Heap for Prime100
+96              //User Area Page No. for Prime100

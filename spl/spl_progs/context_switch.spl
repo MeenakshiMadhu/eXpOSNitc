@@ -1,3 +1,5 @@
+// Context Switch - SCHEDULER
+
 // Fetching PID of current process
 alias currentPID R0;
 currentPID = [SYSTEM_STATUS_TABLE+1];
@@ -47,5 +49,4 @@ endif;
 [NEW_PROCESS_TABLE_ENTRY + 4] = RUNNING;
 
 multipop(BP);
-
 return;

@@ -1,0 +1,15 @@
+int main()
+{
+    decl
+        int temp, fileName, b;
+        string input, output;
+    enddecl
+    begin
+        input = "Program to execute";
+        temp = exposcall("Write", -2, input);
+        temp = exposcall("Read", -1, fileName);
+
+        temp = exposcall("Exec", fileName);
+        return 0;
+    end
+}

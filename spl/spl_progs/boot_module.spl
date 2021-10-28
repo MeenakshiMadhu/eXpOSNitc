@@ -13,18 +13,30 @@ loadi(15,28);
 //int7 module
 loadi(16,29);
 loadi(17,30);
+//int9 module
+loadi(20,33);
+loadi(21,34);
 //int10 module
 loadi(22,35);
 loadi(23,36);
 //module0 (resource manager)
 loadi(40,53);
 loadi(41,54);
+//module1 (process manager)
+loadi(42,55);
+loadi(43,56);
+//module2 (memory manager)
+loadi(44,57);
+loadi(45,58);
 //module4 (device manager)
 loadi(48,61);
 loadi(49,62);
 //module5 (scheduler)
 loadi(50,63);
 loadi(51,64);
+//inode table
+loadi(59,3);
+loadi(60,4);
 //library
 loadi(63,13);
 loadi(64,14);
@@ -81,48 +93,62 @@ PTLR = 10;
 // Storing entry point value (second word in code header) to top of user stack
 [76*512] = [65*512 + 1];
 
+alias ctr R0;
+ctr = 0;
+while (ctr < 83) do
+    [MEMORY_FREE_LIST + ctr] = 1;
+    ctr = ctr + 1;
+endwhile;
+while (ctr < 128) do
+    [MEMORY_FREE_LIST + ctr] = 0;
+    ctr = ctr + 1;
+endwhile;
 
-//EVEN100 PROCESS
+// initialize WAIT_MEM_COUNT & MEM_FREE_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
+[SYSTEM_STATUS_TABLE + 2] = 45;
 
-//Setting page table entries
-PTBR = PAGE_TABLE_BASE+40;
-PTLR = 10;
-//Library
-[PTBR+0] = 63;
-[PTBR+1] = "0100";
-[PTBR+2] = 64;
-[PTBR+3] = "0100";
-//Heap
-[PTBR+4] = 87;
-[PTBR+5] = "0110";
-[PTBR+6] = 88;
-[PTBR+7] = "0110";
-//Code
-[PTBR+8] = 83;
-[PTBR+9] = "0100";
-[PTBR+10] = -1;
-[PTBR+11] = "0000";
-[PTBR+12] = -1;
-[PTBR+13] = "0000";
-[PTBR+14] = -1;
-[PTBR+15] = "0000";
-//Stack
-[PTBR+16] = 85;
-[PTBR+17] = "0110";
-[PTBR+18] = 86;
-[PTBR+19] = "0110";
+// //EVEN100 PROCESS
 
-//Initializing process table entry
-[PROCESS_TABLE+2*16 + 1] = 2;
-[PROCESS_TABLE+2*16 + 4] = CREATED;
-[PROCESS_TABLE+2*16 + 11] = 89;
-[PROCESS_TABLE+2*16 + 12] = 0;
-[PROCESS_TABLE+2*16 + 13] = 8*512;
-[PROCESS_TABLE+2*16 + 14] = PTBR;
-[PROCESS_TABLE+2*16 + 15] = PTLR;
+// //Setting page table entries
+// PTBR = PAGE_TABLE_BASE+40;
+// PTLR = 10;
+// //Library
+// [PTBR+0] = 63;
+// [PTBR+1] = "0100";
+// [PTBR+2] = 64;
+// [PTBR+3] = "0100";
+// //Heap
+// [PTBR+4] = 87;
+// [PTBR+5] = "0110";
+// [PTBR+6] = 88;
+// [PTBR+7] = "0110";
+// //Code
+// [PTBR+8] = 83;
+// [PTBR+9] = "0100";
+// [PTBR+10] = -1;
+// [PTBR+11] = "0000";
+// [PTBR+12] = -1;
+// [PTBR+13] = "0000";
+// [PTBR+14] = -1;
+// [PTBR+15] = "0000";
+// //Stack
+// [PTBR+16] = 85;
+// [PTBR+17] = "0110";
+// [PTBR+18] = 86;
+// [PTBR+19] = "0110";
 
-// Storing entry point value (second word in code header) to top of user stack
-[85*512] = [83*512 + 1];
+// //Initializing process table entry
+// [PROCESS_TABLE+2*16 + 1] = 2;
+// [PROCESS_TABLE+2*16 + 4] = CREATED;
+// [PROCESS_TABLE+2*16 + 11] = 89;
+// [PROCESS_TABLE+2*16 + 12] = 0;
+// [PROCESS_TABLE+2*16 + 13] = 8*512;
+// [PROCESS_TABLE+2*16 + 14] = PTBR;
+// [PROCESS_TABLE+2*16 + 15] = PTLR;
+
+// // Storing entry point value (second word in code header) to top of user stack
+// [85*512] = [83*512 + 1];
 
 
 // //PRIME100 PROCESS
@@ -169,7 +195,6 @@ PTLR = 10;
 
 
 //Setting STATE field for all other process entries to TERMINATED
-alias ctr R0;
 ctr = 2;
 while(ctr<16) do
     [PROCESS_TABLE+ ctr*16 + 4] = TERMINATED;

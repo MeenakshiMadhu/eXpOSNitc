@@ -24,11 +24,11 @@ if( functionNum == 9 ) then
         return;        
     endif;
     [TERMINAL_STATUS_TABLE] = 0;
-    //Setting STATE field for all other process entries to READY
+    //Setting STATE field for all process entries to READY
     alias ctr R1;
     ctr = 0;
     while(ctr<16) do
-        if(ctr != currentPID && [PROCESS_TABLE+ ctr*16 + 4] == WAIT_TERMINAL) then
+        if([PROCESS_TABLE+ ctr*16 + 4] == WAIT_TERMINAL) then
             [PROCESS_TABLE+ ctr*16 + 4] = READY;
         endif;
         ctr = ctr + 1;

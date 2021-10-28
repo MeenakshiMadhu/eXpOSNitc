@@ -1,0 +1,154 @@
+// INTERRUPT 9
+// Exec system call
+
+//set MODE flag field in process table to 9 for exec system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 9;
+
+alias userSP R0;
+userSP = SP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = userSP;
+
+//Switching to Kernel stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +11]*512 - 1;
+
+// Accessing arg 1 - File Name
+alias fileNamePhysicalAddr R1;
+fileNamePhysicalAddr = ([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + ((userSP - 4) % 512);
+alias fileName R2;
+fileName=[fileNamePhysicalAddr];
+
+// Searching memory copy of inodetable
+alias ctr R3;
+alias inodeIndex R4;
+ctr = 0; 
+while (ctr < MAX_FILE_NUM) do
+    if (([INODE_TABLE + ctr*16 + 1] == fileName) && ([INODE_TABLE + ctr*16] == EXEC)) then
+        inodeIndex = ctr;
+        break;
+    endif;
+    ctr = ctr+1;
+endwhile;
+if (ctr == MAX_FILE_NUM) then
+    // Storing -1 as a return value
+    alias physicalAddrRetVal R5;
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = -1;
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+    SP = userSP;
+    ireturn;
+endif;
+
+// call exit process function in PROCESS_MANAGER with current PID;
+multipush (R0, R1, R2, R3, R4, R5);
+alias functionNum R1;
+alias PID R2;
+functionNum = 3;
+PID = [SYSTEM_STATUS_TABLE + 1];
+call PROCESS_MANAGER;
+multipop (R0, R1, R2, R3, R4, R5);
+
+// get user area page no. of current process
+alias userPageNumber R6;
+userPageNumber = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
+
+// reclaiming user area page
+// incrementing memory free list entry & decrementing mem free count
+[MEMORY_FREE_LIST + userPageNumber] = [MEMORY_FREE_LIST + userPageNumber] +1;
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+
+
+// initialize kernel stack of new process
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 - 1;
+
+// update process table entry
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = RUNNING;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 7] = inodeIndex;
+
+// Set library page entries in page table
+PTBR = PAGE_TABLE_BASE+ [SYSTEM_STATUS_TABLE+1]*20;
+PTLR = 10;
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+
+// invoke Get Free Page to allocate 2 stack & 2 heap pages
+// validate entries in page table
+multipush (R0, R1, R2, R3, R4, R5);
+multipush (R1, R2, R3, R4, R5);
+functionNum = 1;
+PID = [SYSTEM_STATUS_TABLE + 1];
+call MEMORY_MANAGER;
+multipop (R1, R2, R3, R4, R5);
+[PTBR+4] = R0;
+[PTBR+5] = "0110";
+multipush (R1, R2, R3, R4, R5);
+functionNum = 1;
+PID = [SYSTEM_STATUS_TABLE + 1];
+call MEMORY_MANAGER;
+multipop (R1, R2, R3, R4, R5);
+[PTBR+6] = R0;
+[PTBR+7] = "0110";
+multipush (R1, R2, R3, R4, R5);
+functionNum = 1;
+PID = [SYSTEM_STATUS_TABLE + 1];
+call MEMORY_MANAGER;
+multipop (R1, R2, R3, R4, R5);
+[PTBR+16] = R0;
+[PTBR+17] = "0110";
+multipush (R1, R2, R3, R4, R5);
+functionNum = 1;
+PID = [SYSTEM_STATUS_TABLE + 1];
+call MEMORY_MANAGER;
+multipop (R1, R2, R3, R4, R5);
+[PTBR+18] = R0;
+[PTBR+19] = "0110";
+multipop (R0, R1, R2, R3, R4, R5);
+
+// allocate code pages
+alias inodeEntry R5;
+inodeEntry = INODE_TABLE + inodeIndex*16;
+alias numOfPages R6;
+numOfPages = 0;
+if ([inodeEntry + 8] != -1) then 
+    numOfPages = numOfPages + 1;
+    if ([inodeEntry + 9] != -1) then 
+        numOfPages = numOfPages + 1;
+        if ([inodeEntry + 10] != -1) then 
+            numOfPages = numOfPages + 1;
+            if ([inodeEntry + 11] != -1) then 
+                numOfPages = numOfPages + 1;
+            endif;
+        endif;
+    endif;
+endif;
+
+// invoke Get Free page to allocate code pages
+// update page table entries
+breakpoint;
+multipush (R0, R1, R2, R3, R4, R5);
+functionNum = 1;
+PID = [SYSTEM_STATUS_TABLE + 1];
+ctr = 0;
+while (ctr < 2*numOfPages) do
+    multipush (R1, R2, R3, R4, R5);
+    call MEMORY_MANAGER;
+    multipop (R1, R2, R3, R4, R5);
+    [PTBR+8+ctr] = R0;
+    [PTBR+8+ctr+1] = "0110";
+    loadi([PTBR+8+ctr], [inodeEntry+8+ctr/2]);
+    ctr = ctr + 2;
+endwhile;
+multipop (R0, R1, R2, R3, R4, R5);
+breakpoint;    
+
+// store entry point IP in stack
+[[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = [[PTBR + 16]*512];
+print [[PTBR + 16]*512];
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+SP = [[PTBR + 16]*512];
+breakpoint;
+ireturn;
