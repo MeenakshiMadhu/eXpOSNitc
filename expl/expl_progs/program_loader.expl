@@ -5,7 +5,7 @@ int main()
         string input, output;
     enddecl
     begin
-        input = "Program to execute";
+        input = "Pgm to run:";
         temp = exposcall("Write", -2, input);
         temp = exposcall("Read", -1, fileName);
 

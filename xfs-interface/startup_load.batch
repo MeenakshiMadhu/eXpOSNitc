@@ -2,6 +2,7 @@ load --os $HOME/myexpos/spl/spl_progs/os_startup.xsm
 load --init $HOME/myexpos/expl/expl_progs/program_loader.xsm
 load --idle $HOME/myexpos/expl/expl_progs/idle.xsm
 load --exec $HOME/myexpos/expl/expl_progs/odd100.xsm
+load --exec $HOME/myexpos/expl/expl_progs/even100.xsm
 load --library $HOME/myexpos/expl/library.lib
 load --exhandler $HOME/myexpos/spl/spl_progs/haltprog.xsm
 load --int=timer $HOME/myexpos/spl/spl_progs/sample_timer.xsm

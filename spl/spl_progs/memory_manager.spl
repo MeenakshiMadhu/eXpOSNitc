@@ -1,5 +1,4 @@
 // MODULE 2 - MEMORY MANAGER
-print "Memory Manager";
 alias functionNum R1;
 
 // Get Free Page

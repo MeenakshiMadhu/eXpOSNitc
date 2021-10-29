@@ -1,12 +1,13 @@
 // INTERRUPT 9
 // Exec system call
 
-//set MODE flag field in process table to 9 for exec system call
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 9;
 
 alias userSP R0;
 userSP = SP;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = userSP;
+
+//set MODE flag field in process table to 9 for exec system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 9;
 
 //Switching to Kernel stack
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +11]*512 - 1;
@@ -59,7 +60,7 @@ userPageNumber = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
 
 
 // initialize kernel stack of new process
-SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 11]*512 - 1;
+SP = userPageNumber*512 - 1;
 
 // update process table entry
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = RUNNING;
@@ -141,14 +142,14 @@ while (ctr < 2*numOfPages) do
     loadi([PTBR+8+ctr], [inodeEntry+8+ctr/2]);
     ctr = ctr + 2;
 endwhile;
+
 multipop (R0, R1, R2, R3, R4, R5);
 breakpoint;    
 
 // store entry point IP in stack
 [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = [[PTBR + 16]*512];
-print [[PTBR + 16]*512];
+// [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = [[PTBR + 16]*512];
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
-SP = [[PTBR + 16]*512];
+SP = 8*512;
 breakpoint;
 ireturn;
