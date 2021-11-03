@@ -3,8 +3,22 @@
 alias functionNum R1;
 alias currentPID R2;
 
+// Acquire Disk
+if (functionNum == 3) then 
+    while ([DISK_STATUS_TABLE] == 1) do 
+        [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_DISK;
+        multipush(R0, R1, R2, R3);
+        call CONTEXT_SWITCH;
+        multipop(R0, R1, R2, R3);
+    endwhile;
+    [DISK_STATUS_TABLE] = 1;
+    [DISK_STATUS_TABLE + 4] = currentPID;
+    breakpoint;
+    return;
+endif;
+
+// Acquire Terminal
 if( functionNum == 8 ) then    
-    // Acquire Terminal
     while( [TERMINAL_STATUS_TABLE] == 1 ) do
         [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
         multipush(R0, R1, R2, R3);
@@ -17,8 +31,8 @@ if( functionNum == 8 ) then
     return;
 endif;
 
+//Release Terminal
 if( functionNum == 9 ) then
-    //Release Terminal
     if(currentPID != [TERMINAL_STATUS_TABLE + 1]) then
         R0 = -1;
         return;        
