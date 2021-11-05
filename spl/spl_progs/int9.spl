@@ -62,6 +62,14 @@ userPageNumber = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
 // initialize kernel stack of new process
 SP = userPageNumber*512 - 1;
 
+ctr = 0;
+alias perProcessResTable R5;
+perProcessResTable = SP + 497;
+while (ctr < 16) do
+    [perProcessResTable + ctr] = -1;
+    ctr = ctr + 1;
+endwhile;
+
 // update process table entry
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = RUNNING;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 7] = inodeIndex;
@@ -130,16 +138,30 @@ endif;
 // update page table entries
 breakpoint;
 multipush (R0, R1, R2, R3, R4, R5);
+
 functionNum = 1;
 PID = [SYSTEM_STATUS_TABLE + 1];
+alias pageNumber R3;
+alias blockNumber R4;
+alias ctr R7;
 ctr = 0;
 while (ctr < 2*numOfPages) do
     multipush (R1, R2, R3, R4, R5);
     call MEMORY_MANAGER;
     multipop (R1, R2, R3, R4, R5);
+    
     [PTBR+8+ctr] = R0;
     [PTBR+8+ctr+1] = "0110";
-    loadi([PTBR+8+ctr], [inodeEntry+8+ctr/2]);
+    
+    // loadi([PTBR+8+ctr], [inodeEntry+8+ctr/2]);
+    multipush (R1, R2, R3, R4, R5, R6, R7);  
+    functionNum = 2;
+    PID = [SYSTEM_STATUS_TABLE + 1];
+    pageNumber = [PTBR+8+ctr];
+    blockNumber = [inodeEntry+8+ctr/2];
+    call DEVICE_MANAGER;
+    multipop (R1, R2, R3, R4, R5, R6, R7);
+
     ctr = ctr + 2;
 endwhile;
 

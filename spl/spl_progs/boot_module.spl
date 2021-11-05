@@ -4,6 +4,9 @@ loadi(3,16);
 //timer interrupt
 loadi(4,17);
 loadi(5,18);
+//disk controller interrupt 
+loadi(6,19);
+loadi(7,20);
 //console interrupt
 loadi(8,21);
 loadi(9,22);
@@ -48,8 +51,8 @@ loadi(83,69);
 //prime100
 //loadi(90,70);
 
-//Terminal is free
 [TERMINAL_STATUS_TABLE] = 0;
+[DISK_STATUS_TABLE] = 0;
 
 //INIT PROCESS
 
@@ -90,10 +93,20 @@ PTLR = 10;
 [PROCESS_TABLE+16+14] = PTBR;
 [PROCESS_TABLE+16+15] = PTLR;
 
+//Initializing per-process resource table
+alias ctr R0;
+alias perProcessResTable R1;
+ctr = 0;
+perProcessResTable = 80*512 + 496;
+while (ctr < 16) do
+    [perProcessResTable + ctr] = -1;
+    ctr = ctr + 1;
+endwhile;
+
+
 // Storing entry point value (second word in code header) to top of user stack
 [76*512] = [65*512 + 1];
 
-alias ctr R0;
 ctr = 0;
 while (ctr < 83) do
     [MEMORY_FREE_LIST + ctr] = 1;
