@@ -13,7 +13,6 @@ if (functionNum == 3) then
     endwhile;
     [DISK_STATUS_TABLE] = 1;
     [DISK_STATUS_TABLE + 4] = currentPID;
-    breakpoint;
     return;
 endif;
 
@@ -27,7 +26,6 @@ if( functionNum == 8 ) then
     endwhile ;
     [TERMINAL_STATUS_TABLE] = 1;
     [TERMINAL_STATUS_TABLE + 1] = currentPID;
-    breakpoint;
     return;
 endif;
 
@@ -48,6 +46,5 @@ if( functionNum == 9 ) then
         ctr = ctr + 1;
     endwhile;
     R0 = 0;
-    breakpoint;
     return;
 endif ;

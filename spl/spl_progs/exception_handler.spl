@@ -1,0 +1,105 @@
+// Exception Handler Module 
+
+// print("INT 10");
+breakpoint;
+
+//set MODE flag field in process table to -1 for exception handler
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = -1;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = SP;
+
+//Switching to Kernel stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +11]*512 - 1;
+
+backup;
+multipush(EIP);
+
+alias userSP R0;
+userSP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13];
+
+
+if(userSP >= PTLR*512-1) then
+    print("Stack full.");
+    print("Exiting");
+    R1 = 3;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    call PROCESS_MANAGER;
+    call CONTEXT_SWITCH;
+endif;
+
+
+if(EC == 1 || EC == 2 || EC == 3) then
+    print("Error:");
+    print(EC);
+    print(EIP);
+    R1 = 3;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    call PROCESS_MANAGER;
+    call CONTEXT_SWITCH;
+endif;
+
+
+alias functionNum R1;
+alias PID R2;
+PID = [SYSTEM_STATUS_TABLE+1];
+// PTBR = PAGE_TABLE_BASE+ PID*20;
+
+
+if (EC == 0) then
+    // print("Page fault");
+    // print(EPN);
+    
+    if (EPN == 2 || EPN == 3) then 
+        // print("Heap page");
+
+        multipush(R0, R1, R2, R3);
+        functionNum = 1;
+        call MEMORY_MANAGER;
+        [PTBR+4] = R0;
+        [PTBR+5] = "1110";
+        multipop(R0, R1, R2, R3);
+
+        multipush(R0, R1, R2, R3);
+        functionNum = 1;
+        call MEMORY_MANAGER;
+        [PTBR+6] = R0;
+        [PTBR+7] = "1110";
+        multipop(R0, R1, R2, R3);
+
+    endif;
+
+    if (EPN >= 4 && EPN <= 7) then
+        // print("Code page");
+        multipush(R0, R1, R2, R3);
+        alias blockNumber R3;
+        functionNum = 5;
+        PID = [SYSTEM_STATUS_TABLE + 1];
+        blockNumber = [DISK_MAP_TABLE + PID*10 + EPN];
+        call MEMORY_MANAGER;
+        [PTBR + 2*EPN] = R0;
+        [PTBR + 2*EPN + 1] = "1100";
+        multipop(R0, R1, R2, R3);
+
+    endif;
+
+    if(EPN<2 || EPN>7) then
+        R1 = 3;
+        R2 = [SYSTEM_STATUS_TABLE + 1];
+        call PROCESS_MANAGER;
+        call CONTEXT_SWITCH;
+    endif;
+
+    multipop(EIP);
+    restore;
+
+    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] + 1;
+    [[PTBR + 2*(SP/512)]*512 + SP%512] = EIP;
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+
+    // print("INT10 exit");
+    breakpoint;
+    ireturn;
+
+endif;
+

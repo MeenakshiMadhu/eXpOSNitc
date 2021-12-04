@@ -34,7 +34,6 @@ if (functionNum == 1) then
         endif;
         ctr = ctr + 1;
     endwhile;
-    breakpoint;
     return;
 endif;
 
@@ -57,7 +56,62 @@ if (functionNum == 2) then
         endif;
         ctr = ctr + 1;
     endwhile;
-    breakpoint;
+    return;
+endif;
+
+
+// Release block
+if (functionNum == 4) then
+    alias PID R2;
+    alias blockNum R3;
+    [DISK_FREE_LIST + blockNum] = [DISK_FREE_LIST + blockNum] - 1;
+    return;
+endif;
+
+
+// Get Code Page
+if (functionNum == 5) then
+    // print("GetCodePg");
+    alias PID R2;
+    alias blockNumber R3;
+    alias pageNumber R0;
+    alias ctr R4;
+    alias i R5;
+    alias diskMapTableEntry R6;
+    ctr = 0;
+    while (ctr < 16) do
+        diskMapTableEntry = DISK_MAP_TABLE + ctr*10;
+        i = 4;
+        while (i < 8 && [diskMapTableEntry + i] != -1) do
+            if (([diskMapTableEntry + i] == blockNumber) && [PAGE_TABLE_BASE + ctr*20 + i*2] != -1) then
+                pageNumber = [PAGE_TABLE_BASE + ctr*20 + i*2];
+                [MEMORY_FREE_LIST + pageNumber] = [MEMORY_FREE_LIST + pageNumber] + 1;
+                return;
+            endif;
+            i = i + 1;
+        endwhile;
+        ctr = ctr + 1;
+    endwhile;
+
+    // if blocknum was not found, it is not shared by other processes
+
+    // invoke Get Free Page to allocate new memory page
+    multipush(R1, R2, R3, R4, R5, R6);
+    functionNum = 1;
+    call MEMORY_MANAGER;
+    multipop(R1, R2, R3, R4, R5, R6);
+
+    //blocknumber in R3, pagenumber in R0, functionNum in R1
+
+    // invoke Disk Load to load disk block to new memory page
+    multipush(R1, R2, R3, R4, R5, R6);
+    functionNum = 2;
+    R4 = blockNumber;
+    R3 = pageNumber;
+    call DEVICE_MANAGER;
+    multipop(R1, R2, R3, R4, R5, R6);
+    // print("ExtGtCdPg");
+    // breakpoint;
     return;
 endif;
 

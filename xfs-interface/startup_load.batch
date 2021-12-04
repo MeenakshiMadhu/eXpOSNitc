@@ -1,10 +1,11 @@
 load --os $HOME/myexpos/spl/spl_progs/os_startup.xsm
 load --init $HOME/myexpos/expl/expl_progs/program_loader.xsm
 load --idle $HOME/myexpos/expl/expl_progs/idle.xsm
-load --exec $HOME/myexpos/expl/expl_progs/odd100.xsm
 load --exec $HOME/myexpos/expl/expl_progs/even100.xsm
+load --exec $HOME/myexpos/expl/expl_progs/bub_sort.xsm
+load --exec $HOME/myexpos/expl/expl_progs/l_list.xsm
 load --library $HOME/myexpos/expl/library.lib
-load --exhandler $HOME/myexpos/spl/spl_progs/haltprog.xsm
+load --exhandler $HOME/myexpos/spl/spl_progs/exception_handler.xsm
 load --int=timer $HOME/myexpos/spl/spl_progs/int_timer.xsm
 load --int=console $HOME/myexpos/spl/spl_progs/int_console.xsm
 load --int=disk $HOME/myexpos/spl/spl_progs/int_disk.xsm

@@ -1,7 +1,8 @@
 // INTERRUPT 9
 // Exec system call
 
-
+// print("EXEC");
+breakpoint;
 alias userSP R0;
 userSP = SP;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = userSP;
@@ -49,6 +50,7 @@ PID = [SYSTEM_STATUS_TABLE + 1];
 call PROCESS_MANAGER;
 multipop (R0, R1, R2, R3, R4, R5);
 
+breakpoint;
 // get user area page no. of current process
 alias userPageNumber R6;
 userPageNumber = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
@@ -62,44 +64,40 @@ userPageNumber = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
 // initialize kernel stack of new process
 SP = userPageNumber*512 - 1;
 
-ctr = 0;
+// update PER PROCESS RESOURCE TABLE
 alias perProcessResTable R5;
 perProcessResTable = SP + 497;
+ctr = 0;
 while (ctr < 16) do
     [perProcessResTable + ctr] = -1;
-    ctr = ctr + 1;
+    ctr = ctr + 2;
 endwhile;
 
 // update process table entry
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 4] = RUNNING;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 7] = inodeIndex;
 
+breakpoint;
 // Set library page entries in page table
-PTBR = PAGE_TABLE_BASE+ [SYSTEM_STATUS_TABLE+1]*20;
+PTBR = PAGE_TABLE_BASE+ 20*[SYSTEM_STATUS_TABLE + 1];
 PTLR = 10;
+
 //Library
 [PTBR+0] = 63;
 [PTBR+1] = "0100";
 [PTBR+2] = 64;
 [PTBR+3] = "0100";
 
-// invoke Get Free Page to allocate 2 stack & 2 heap pages
+//invalidate pg table entries for heap 
+[PTBR+4] = -1;
+[PTBR+5] = "0000";
+[PTBR+6] = -1;
+[PTBR+7] = "0000";
+
+
+// invoke Get Free Page to allocate 2 stack pages
 // validate entries in page table
 multipush (R0, R1, R2, R3, R4, R5);
-multipush (R1, R2, R3, R4, R5);
-functionNum = 1;
-PID = [SYSTEM_STATUS_TABLE + 1];
-call MEMORY_MANAGER;
-multipop (R1, R2, R3, R4, R5);
-[PTBR+4] = R0;
-[PTBR+5] = "0110";
-multipush (R1, R2, R3, R4, R5);
-functionNum = 1;
-PID = [SYSTEM_STATUS_TABLE + 1];
-call MEMORY_MANAGER;
-multipop (R1, R2, R3, R4, R5);
-[PTBR+6] = R0;
-[PTBR+7] = "0110";
 multipush (R1, R2, R3, R4, R5);
 functionNum = 1;
 PID = [SYSTEM_STATUS_TABLE + 1];
@@ -116,62 +114,51 @@ multipop (R1, R2, R3, R4, R5);
 [PTBR+19] = "0110";
 multipop (R0, R1, R2, R3, R4, R5);
 
-// allocate code pages
-alias inodeEntry R5;
-inodeEntry = INODE_TABLE + inodeIndex*16;
-alias numOfPages R6;
-numOfPages = 0;
-if ([inodeEntry + 8] != -1) then 
-    numOfPages = numOfPages + 1;
-    if ([inodeEntry + 9] != -1) then 
-        numOfPages = numOfPages + 1;
-        if ([inodeEntry + 10] != -1) then 
-            numOfPages = numOfPages + 1;
-            if ([inodeEntry + 11] != -1) then 
-                numOfPages = numOfPages + 1;
-            endif;
-        endif;
-    endif;
-endif;
 
-// invoke Get Free page to allocate code pages
+// invoke Get Code page to allocate first code page 
 // update page table entries
-breakpoint;
 multipush (R0, R1, R2, R3, R4, R5);
-
-functionNum = 1;
+functionNum = 5;
 PID = [SYSTEM_STATUS_TABLE + 1];
-alias pageNumber R3;
-alias blockNumber R4;
-alias ctr R7;
-ctr = 0;
-while (ctr < 2*numOfPages) do
-    multipush (R1, R2, R3, R4, R5);
-    call MEMORY_MANAGER;
-    multipop (R1, R2, R3, R4, R5);
-    
-    [PTBR+8+ctr] = R0;
-    [PTBR+8+ctr+1] = "0110";
-    
-    // loadi([PTBR+8+ctr], [inodeEntry+8+ctr/2]);
-    multipush (R1, R2, R3, R4, R5, R6, R7);  
-    functionNum = 2;
-    PID = [SYSTEM_STATUS_TABLE + 1];
-    pageNumber = [PTBR+8+ctr];
-    blockNumber = [inodeEntry+8+ctr/2];
-    call DEVICE_MANAGER;
-    multipop (R1, R2, R3, R4, R5, R6, R7);
+alias blockNumber R3;
+blockNumber = [INODE_TABLE + 16*inodeIndex + 8];
+call MEMORY_MANAGER;
+[PTBR+8] = R0;
+[PTBR+9] = "0100";
+multipop (R0, R1, R2, R3, R4, R5);
 
-    ctr = ctr + 2;
+//invalidate other code pages
+[PTBR+10] = -1;
+[PTBR+11] = "0000";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+
+
+//initialize PER PROCESS DISK MAP TABLE
+alias diskMapTableEntry R7;
+diskMapTableEntry = DISK_MAP_TABLE + [SYSTEM_STATUS_TABLE+1]*10;
+alias blockNum R8;
+blockNum = 8;
+alias disk R9;
+disk = 4;
+
+while(disk < 8 && [INODE_TABLE + inodeIndex*16 + blockNum] != -1) do
+    //print [INODE_TABLE + inodeIndex*16 + blockNum];
+    [diskMapTableEntry + disk] = [INODE_TABLE + inodeIndex*16 + blockNum];
+    disk = disk+1;
+    blockNum = blockNum + 1;
 endwhile;
 
-multipop (R0, R1, R2, R3, R4, R5);
-breakpoint;    
 
 // store entry point IP in stack
 [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
-// [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 +13] = [[PTBR + 16]*512];
+
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 9] = 0;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 +13] = 8*512;
 SP = 8*512;
+// print("Exit EXEC");
 breakpoint;
 ireturn;
+

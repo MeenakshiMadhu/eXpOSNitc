@@ -37,6 +37,8 @@ if (functionNum == 3) then
     multipop(R0, R1, R2, R3);
 
     [PROCESS_TABLE + PID*16 + 4] = TERMINATED;
+    // print("Exited process");
+    breakpoint;
     return;
 endif;
 
@@ -53,22 +55,39 @@ if (functionNum == 4) then
     [PTBR+3] = "0000";
     
     // for each valid entry in page table, invoke Release Page
-    alias ctr R3;
-    alias pageNum R4;
+    multipush(R0, R1, R2, R3, R4, R5);
+    alias ctr R4;
+    alias pageNum R3;
     ctr = 4;
-    while (ctr+1 < 20) do
+    while (ctr < 20) do
         if ([PTBR + ctr] != -1) then
-            multipush(R0, R1, R2, R3, R4);
-            alias functionNum R1;
-            alias pageNum R2;
             functionNum = 2;
             pageNum = [PTBR + ctr];
             call MEMORY_MANAGER;
-            multipop(R0, R1, R2, R3, R4);
         endif;
         [PTBR + ctr] = -1;
         [PTBR + ctr + 1] = "0000";
         ctr = ctr + 2;
     endwhile;
+    multipop(R0, R1, R2, R3, R4, R5);
+
+    // for each valid code/heap entry in DMT, invoke Release block 
+    alias diskMapTableEntry R5;
+    diskMapTableEntry = DISK_MAP_TABLE + PID*10;
+    ctr = 2;
+    while (ctr < 10) do 
+        if ([diskMapTableEntry + ctr] != -1 && (ctr == 2 || ctr == 3 || ctr == 8 || ctr == 9)) then
+            multipush(R0, R1, R2, R3, R4);
+            functionNum = 4;
+            alias blockNum R3;
+            blockNum = [diskMapTableEntry + ctr];
+            call MEMORY_MANAGER;
+            multipop(R0, R1, R2, R3, R4);
+        endif;
+        [diskMapTableEntry + ctr] = -1;
+        ctr = ctr + 1;
+    endwhile;
+
+
     return;
 endif;
